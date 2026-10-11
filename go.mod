@@ -2,7 +2,7 @@ module github.com/llgo-compat/plan9asm
 
 go 1.27.1
 
-replace github.com/xgo-dev/plan9asm => github.com/cpunion/plan9asm v0.0.0-20261011095332-77a70d89c818
+replace github.com/xgo-dev/plan9asm => github.com/cpunion/plan9asm v0.0.0-20261011101352-3dc36d71c2cb
 
 require (
 	github.com/xgo-dev/plan9asm v0.0.0

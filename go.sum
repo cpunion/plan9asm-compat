@@ -1,5 +1,5 @@
-github.com/cpunion/plan9asm v0.0.0-20261011095332-77a70d89c818 h1:xUFoB1WDQP+aCPzYt8ZczZDDPVomx0cnIoumI9f7KJk=
-github.com/cpunion/plan9asm v0.0.0-20261011095332-77a70d89c818/go.mod h1:OsOw1AsXQBiQpS7IRbtCnKymRWZoBjLAI6wxvp6GdGQ=
+github.com/cpunion/plan9asm v0.0.0-20261011101352-3dc36d71c2cb h1:w1A2YNsvnRD+zS9k3L1bXBoVjAMqaJyqW9rjjQOhGJE=
+github.com/cpunion/plan9asm v0.0.0-20261011101352-3dc36d71c2cb/go.mod h1:OsOw1AsXQBiQpS7IRbtCnKymRWZoBjLAI6wxvp6GdGQ=
 github.com/xgo-dev/llvm v0.9.9 h1:u4RZvy0vxu8nNt4oTrhttyMSyscYtmiy9geP+Kl/RYg=
 github.com/xgo-dev/llvm v0.9.9/go.mod h1:42vav2/cI5BAIcL543DZSMO9do8/aCK2z7JERH+AE+M=
 golang.org/x/arch v0.14.0 h1:z9JUEZWr8x4rR0OU6c4/4t6E6jOZ8/QBS2bBYBm4tx4=
