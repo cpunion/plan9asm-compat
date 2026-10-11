@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "skips": [
+    {
+      "module": "github.com/quasilyte/GopherJRE",
+      "version": "v0.0.0-20250131090304-888098460476",
+      "asm_file": "jruntime/call_amd64.s",
+      "targets": ["darwin/amd64", "linux/amd64", "windows/amd64"],
+      "source_sha256": "def9bd4b4d1faccabcd3b30722e7400b6f7bd0db415495c5ca4e9279dbc1afc0",
+      "symbol": "jcallScalar",
+      "object_hex": "488d0509000000488906",
+      "reason": "The source saves a native TEXT-local return address and jumps into foreign code, whose compiler also uses the fixed jcallScalar+73 Go-call entry. Go 1.27.1 Linux/amd64 places that entry at +63, so this source has a stale hardcoded offset as well as an unsupported native continuation contract. The byte witness proves layout dependence, not correct Go execution; normal LLVM translation does not preserve this private ABI.",
+      "evidence_urls": [
+        "https://github.com/quasilyte/GopherJRE/blob/888098460476/jruntime/call_amd64.s",
+        "https://github.com/quasilyte/GopherJRE/blob/888098460476/jit/compiler/x64/compiler.go"
+      ]
+    },
+    {
+      "module": "github.com/aabalke/gojit",
+      "version": "v0.0.0-20260919011104-e8574bd413ce",
+      "asm_file": "jit_amd64.s",
+      "targets": ["darwin/amd64", "linux/amd64", "windows/amd64"],
+      "source_sha256": "8e9ac14a0cb2d64c5cc228c68fcab7f28c26c702a207cb1b613680caa63a4541",
+      "symbol": "callJIT",
+      "object_hex": "00beadde4c89",
+      "reason": "The JIT scans native callJIT TEXT for a literal sentinel, then branches into its middle using a private register/stack contract and fixed 48+8-byte frame repair. LLVM translation does not preserve this native byte layout or continuation ABI. Current Go object assembly and the sentinel witness do not establish that the JIT runs correctly or that its frame assumptions remain valid.",
+      "evidence_urls": [
+        "https://github.com/aabalke/gojit/blob/e8574bd413ce/jit_amd64.s",
+        "https://github.com/aabalke/gojit/blob/e8574bd413ce/jit.go",
+        "https://github.com/aabalke/gojit/blob/e8574bd413ce/assembler_amd64.go"
+      ]
+    },
+    {
+      "module": "github.com/LamkasDev/sharkie",
+      "version": "v0.0.0-20260919122514-0af66a893005",
+      "asm_file": "cmd/asm/runner_amd64.s",
+      "targets": ["darwin/amd64", "linux/amd64", "windows/amd64"],
+      "source_sha256": "a365b2d8c88ded99e7de6dae28a082a16466b23bd6f52e6bfb3ee68d3737213e",
+      "symbol": "Run",
+      "object_hex": "eb05e800000000",
+      "reason": "The source branches over a five-byte CALL and constructs Run+7 for a private native stack transition. Go 1.27.1 adds a four-byte Run prologue, making Run+7 point inside the CALL displacement rather than the intended continuation at +11: this is also a source hardcoded-offset defect. The object witness proves layout dependence, not correct Go execution. Remaining applicable assembly must still compile or have independently scoped source N/A evidence.",
+      "evidence_urls": [
+        "https://github.com/LamkasDev/sharkie/blob/0af66a893005/cmd/asm/runner_amd64.s"
+      ]
+    },
+    {
+      "module": "github.com/lamkasdev/sharkie",
+      "version": "v0.0.0-20260919122514-0af66a893005",
+      "asm_file": "cmd/asm/runner_amd64.s",
+      "targets": ["darwin/amd64", "linux/amd64", "windows/amd64"],
+      "source_sha256": "a365b2d8c88ded99e7de6dae28a082a16466b23bd6f52e6bfb3ee68d3737213e",
+      "symbol": "Run",
+      "object_hex": "eb05e800000000",
+      "reason": "The source branches over a five-byte CALL and constructs Run+7 for a private native stack transition. Go 1.27.1 adds a four-byte Run prologue, making Run+7 point inside the CALL displacement rather than the intended continuation at +11: this is also a source hardcoded-offset defect. The object witness proves layout dependence, not correct Go execution. Remaining applicable assembly must still compile or have independently scoped source N/A evidence.",
+      "evidence_urls": [
+        "https://github.com/lamkasdev/sharkie/blob/0af66a893005/cmd/asm/runner_amd64.s"
+      ]
+    }
+  ]
+}

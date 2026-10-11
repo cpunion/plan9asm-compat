@@ -1,0 +1,65 @@
+name: Setup Windows LLVM 22
+description: Install the pinned LLVM 22 toolchain used by the Windows CI lanes.
+
+runs:
+  using: composite
+  steps:
+    - name: Set up MSYS2 for LLVM 22
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: CLANG64
+        path-type: inherit
+        update: true
+
+    - name: Install LLVM 22
+      shell: msys2 {0}
+      env:
+        LLVM_VERSION: '22.1.8'
+        LLVM_PACKAGE_VERSION: '22.1.8-2'
+        LLVM_RUNTIME_PACKAGE_VERSION: '22.1.8-1'
+      run: |
+        set -euo pipefail
+        repo=https://repo.msys2.org/mingw/clang64
+        prefix=mingw-w64-clang-x86_64
+        packages=(
+          "clang-$LLVM_PACKAGE_VERSION"
+          "clang-libs-$LLVM_PACKAGE_VERSION"
+          "compiler-rt-$LLVM_PACKAGE_VERSION"
+          "llvm-$LLVM_PACKAGE_VERSION"
+          "llvm-libs-$LLVM_PACKAGE_VERSION"
+          "llvm-tools-$LLVM_PACKAGE_VERSION"
+          "lld-$LLVM_PACKAGE_VERSION"
+          "libc++-$LLVM_RUNTIME_PACKAGE_VERSION"
+          "libunwind-$LLVM_RUNTIME_PACKAGE_VERSION"
+        )
+        urls=()
+        for package in "${packages[@]}"; do
+          urls+=("$repo/$prefix-$package-any.pkg.tar.zst")
+        done
+
+        # libc++ supplies the compiler runtime. Keep the exact LLVM component
+        # set mutually consistent while acknowledging the cc-libs virtual.
+        pacman --noconfirm -U \
+          --assume-installed "$prefix-cc-libs=$LLVM_VERSION" \
+          "${urls[@]}"
+
+        if [[ "$(llvm-config --version)" != "$LLVM_VERSION" ]]; then
+          echo "expected LLVM $LLVM_VERSION, got $(llvm-config --version)" >&2
+          exit 1
+        fi
+
+        flatten() {
+          local value=$1
+          value="${value//$'\r'/}"
+          value="${value//$'\n'/ }"
+          printf '%s' "$value"
+        }
+        echo "CGO_CFLAGS=$(flatten "$(llvm-config --cflags)")" >> "$GITHUB_ENV"
+        echo "CGO_CXXFLAGS=$(flatten "$(llvm-config --cxxflags)")" >> "$GITHUB_ENV"
+        echo "CGO_LDFLAGS=$(flatten "$(llvm-config --ldflags --libs all --system-libs)")" >> "$GITHUB_ENV"
+        clang_bin="$(cygpath -w /clang64/bin)"
+        echo "CC=$clang_bin\\clang.exe" >> "$GITHUB_ENV"
+        echo "CXX=$clang_bin\\clang++.exe" >> "$GITHUB_ENV"
+        echo 'CGO_ENABLED=1' >> "$GITHUB_ENV"
+        echo 'GOFLAGS=-tags=byollvm' >> "$GITHUB_ENV"
+        echo "$clang_bin" >> "$GITHUB_PATH"

@@ -1,0 +1,9 @@
+[
+  {"file":"jruntime/bindfunc.go","sha256":"701fca16de07e005cdb158c9d58140fb8e11b33368f50569948fcc86a4dc64d2","constraint_header":"package jruntime\n"},
+  {"file":"jruntime/call.go","sha256":"256cbdbb7eb5e2b3cfd13b33d7c8c6264ba06d5e77805717670b9a589541befe","constraint_header":"package jruntime\n"},
+  {"file":"jruntime/call_amd64.s","sha256":"def9bd4b4d1faccabcd3b30722e7400b6f7bd0db415495c5ca4e9279dbc1afc0"},
+  {"file":"jruntime/env.go","sha256":"e3643986fe96f7c95c86040cd9fa2003af01f92c9368f57ac1cb883081240cf6","constraint_header":"package jruntime\n"},
+  {"file":"jruntime/new_object.go","sha256":"04aaab2e4327aed01ce25c3940cd4b21997968a61a921abf2192d64296dab73e","constraint_header":"package jruntime\n"},
+  {"file":"jruntime/object.go","sha256":"74476b5c8f981dab275b92584635e4c53f39ed476f0c3aecadb21ec4e4d52427","constraint_header":"package jruntime\n"},
+  {"file":"jruntime/vm.go","sha256":"b83780ac0e972ffe10b7e052d0565a4b185ba51fae080b22b8dc9570f12b3e67","constraint_header":"package jruntime\n"}
+]

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "aliases": [
+    {
+      "module": "github.com/EthanGYoung/ContainerFS",
+      "version": "v0.0.0-20190824181837-c8de36334a9e",
+      "module_sum": "h1:UuU7qgyQs6POuZjS0dAJAG5R/aCIa8bVQRWAHuGzKWw=",
+      "source_dir": "ContainerFS",
+      "import_module": "gvisor.googlesource.com/gvisor",
+      "evidence_url": "https://github.com/EthanGYoung/ContainerFS/tree/c8de36334a9e/ContainerFS"
+    },
+    {
+      "module": "github.com/ethangyoung/containerfs",
+      "version": "v0.0.0-20190824181837-c8de36334a9e",
+      "module_sum": "h1:aQHHJ3hoxLd1CG2TcaRHc1DLHaXWOvnKYqkIABK/+ZU=",
+      "source_dir": "ContainerFS",
+      "import_module": "gvisor.googlesource.com/gvisor",
+      "evidence_url": "https://github.com/EthanGYoung/ContainerFS/tree/c8de36334a9e/ContainerFS"
+    }
+  ]
+}

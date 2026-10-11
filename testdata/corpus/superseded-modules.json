@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "skips": [
+    {
+      "module": "github.com/celliott/gvisor",
+      "version": "v0.0.0-20180504232233-3b895abd3b05",
+      "replacement_module": "github.com/google/gvisor",
+      "replacement_version": "v0.0.0-20260922222726-edc61702468b",
+      "reason": "The 2018 mirror is frozen at the same commit present in the canonical gVisor repository; its historical imports and generated dependencies cannot build with current Go. The newer canonical module is scanned and its assembly is tested separately.",
+      "evidence_urls": [
+        "https://github.com/celliott/gvisor/commit/3b895abd3b05f13fc78561ddf8d1d27a756f0a89",
+        "https://github.com/google/gvisor/commit/3b895abd3b05f13fc78561ddf8d1d27a756f0a89"
+      ]
+    },
+    {
+      "module": "github.com/0pcom/skywire",
+      "version": "v1.3.69",
+      "replacement_module": "github.com/skycoin/skywire",
+      "replacement_version": "v1.3.96",
+      "reason": "The forked module's go.mod declares github.com/skycoin/skywire. Its exact source is no longer reliably reachable through the old GitHub path; the newer canonical module is scanned separately and has no assembly in the recorded version.",
+      "evidence_urls": [
+        "https://proxy.golang.org/github.com/0pcom/skywire/@v/v1.3.69.mod",
+        "https://github.com/skycoin/skywire/tree/v1.3.96"
+      ]
+    },
+    {
+      "module": "github.com/goccy/sonic",
+      "version": "v1.0.0-rc.3",
+      "replacement_module": "github.com/bytedance/sonic",
+      "replacement_version": "v1.15.4",
+      "reason": "This frozen Sonic copy declares github.com/bytedance/sonic in go.mod and documents Go 1.15-1.17. Its generated AVX entry returns a pointer to its own exact TEXT bytes, a native-layout contract LLVM IR cannot preserve. The newer canonical module is independently scanned and its assembly remains in the required corpus.",
+      "evidence_urls": [
+        "https://proxy.golang.org/github.com/goccy/sonic/@v/v1.0.0-rc.3.mod",
+        "https://github.com/goccy/sonic/blob/v1.0.0-rc.3/internal/native/avx/native_amd64.s",
+        "https://github.com/bytedance/sonic/tree/v1.15.4"
+      ]
+    }
+  ]
+}
