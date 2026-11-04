@@ -1,0 +1,118 @@
+name: Native crosscall2 entry diagnostic
+
+on:
+  push:
+    branches:
+      - codex/crosscall2-entry-diagnostic-20261105
+
+permissions:
+  contents: read
+
+jobs:
+  native-entry:
+    if: ${{ github.repository == 'cpunion/plan9asm-compat' && github.event.repository.fork }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      GOENV: 'off'
+      GOWORK: 'off'
+      GOTOOLCHAIN: local
+      GOFLAGS: -mod=readonly
+      GOAMD64: v1
+      GOMAXPROCS: '2'
+      GOMEMLIMIT: 4GiB
+      CGO_ENABLED: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+      GOPROXY: https://proxy.golang.org,https://goproxy.cn,direct
+      GOSUMDB: sum.golang.org
+      GOPRIVATE: ''
+      GONOSUMDB: ''
+      GONOPROXY: ''
+      GOINSECURE: ''
+      LLVM_CONFIG: /usr/bin/llvm-config-22
+      CC: clang-22
+      CXX: clang++-22
+      LD_LIBRARY_PATH: /usr/lib/llvm-22/lib
+      LLGO_ROOT: ${{ github.workspace }}/_out/llgo
+      LLGO_BUILD_CACHE: 'on'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Prepare source evidence
+        run: |
+          mkdir -p _out/crosscall2-entry
+          git rev-parse HEAD > _out/crosscall2-entry/source-tree.txt
+          git status --porcelain > _out/crosscall2-entry/source-before.txt
+          test ! -s _out/crosscall2-entry/source-before.txt
+          cp .github/workflows/crosscall2-entry-diagnostic.yml _out/crosscall2-entry/workflow.yml
+          cp -R testdata/diagnostics/crosscall2-stack-entry _out/crosscall2-entry/fixture-source
+      - uses: ./.github/actions/setup-go
+        with:
+          go-version: '1.27.3'
+          cache: false
+      - name: Install LLVM 22 and pinned build dependencies
+        timeout-minutes: 14
+        run: |
+          set -euo pipefail
+          bash scripts/install-ci-llvm22-ubuntu.sh 2>&1 | tee _out/crosscall2-entry/llvm-install.log
+          sudo timeout -k 10s 4m env DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=2 install -y cmake pkg-config libgc-dev libssl-dev zlib1g-dev libffi-dev libcjson-dev libuv1-dev 2>&1 | tee _out/crosscall2-entry/native-deps.log
+      - name: Checkout source compiler c5bd
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          repository: cpunion/llgo
+          ref: c5bd35a66378ade63b2ab5c6e5458ae2041874bd
+          path: _out/llgo
+      - name: Build source compiler once
+        timeout-minutes: 20
+        run: |
+          set -euo pipefail
+          export XDG_CACHE_HOME="$RUNNER_TEMP/crosscall2-llgo"
+          CGO_CPPFLAGS="$("$LLVM_CONFIG" --cppflags)"
+          CGO_LDFLAGS="$("$LLVM_CONFIG" --ldflags --libs all)"
+          CGO_LDFLAGS="${CGO_LDFLAGS//$'\n'/ }"
+          export CGO_CPPFLAGS CGO_LDFLAGS CGO_CXXFLAGS=-std=c++17
+          test "$(go env GOVERSION)" = go1.27.3
+          test "$(go env GOHOSTOS)/$(go env GOHOSTARCH)" = linux/amd64
+          test "$($LLVM_CONFIG --version)" = 22.1.8
+          test "$(git -C "$LLGO_ROOT" rev-parse HEAD)" = c5bd35a66378ade63b2ab5c6e5458ae2041874bd
+          test -z "$(git -C "$LLGO_ROOT" status --porcelain)"
+          mkdir -p _out/bin
+          go env -json > _out/crosscall2-entry/go-env.json
+          go build -C "$LLGO_ROOT" -p=1 -tags=byollvm -buildvcs=true -mod=readonly -o "$GITHUB_WORKSPACE/_out/bin/llgo" ./cmd/llgo 2>&1 | tee _out/crosscall2-entry/cli-build.log
+          go version -m _out/bin/llgo > _out/crosscall2-entry/compiler-build.txt
+          sha256sum _out/bin/llgo > _out/crosscall2-entry/compiler.sha256
+          go list -C "$LLGO_ROOT" -m -json github.com/xgo-dev/plan9asm > _out/crosscall2-entry/core-module.json
+      - name: Four independent native terminals and object observations
+        timeout-minutes: 20
+        run: |
+          set -euo pipefail
+          export XDG_CACHE_HOME="$RUNNER_TEMP/crosscall2-llgo"
+          export DIAGNOSTIC_OUT="$GITHUB_WORKSPACE/_out/crosscall2-entry"
+          export LLGO="$GITHUB_WORKSPACE/_out/bin/llgo"
+          CGO_CPPFLAGS="$("$LLVM_CONFIG" --cppflags)"
+          CGO_LDFLAGS="$("$LLVM_CONFIG" --ldflags --libs all)"
+          CGO_LDFLAGS="${CGO_LDFLAGS//$'\n'/ }"
+          export CGO_CPPFLAGS CGO_LDFLAGS CGO_CXXFLAGS=-std=c++17
+          go_root=$(go env GOROOT)
+          tools=("$go_root/bin/go" "$go_root/pkg/tool/linux_amd64/compile" "$go_root/pkg/tool/linux_amd64/asm" "$go_root/pkg/tool/linux_amd64/link")
+          for tool in clang llc llvm-objdump llvm-nm llvm-readobj llvm-ar; do tools+=("/usr/lib/llvm-22/bin/$tool"); done
+          sha256sum "${tools[@]}" > "$DIAGNOSTIC_OUT/tools-before.sha256"
+          status=0
+          python3 testdata/diagnostics/crosscall2-stack-entry/run-diagnostic.py || status=$?
+          sha256sum -c "$DIAGNOSTIC_OUT/tools-before.sha256" > "$DIAGNOSTIC_OUT/tools-after.log" || status=1
+          sha256sum -c "$DIAGNOSTIC_OUT/compiler.sha256" > "$DIAGNOSTIC_OUT/compiler-after.log" || status=1
+          git status --porcelain > "$DIAGNOSTIC_OUT/source-after.txt"
+          test ! -s "$DIAGNOSTIC_OUT/source-after.txt" || status=1
+          test -z "$(git -C "$LLGO_ROOT" status --porcelain)" || status=1
+          test "$(git -C "$LLGO_ROOT" rev-parse HEAD)" = c5bd35a66378ade63b2ab5c6e5458ae2041874bd || status=1
+          rm -f _out/bin/llgo
+          exit "$status"
+      - name: Always retain all terminals and objects
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: crosscall2-native-entry
+          path: _out/crosscall2-entry
+          if-no-files-found: error
