@@ -62,8 +62,20 @@ test('the bounded runtime job keeps complete policies, one pinned CLI and all pr
     'bash -n scripts/check-reported-runtime.sh',
   ]) assert.ok(runtime.includes(command), command);
   assert.equal(runtime.match(/^          go build /gm).length, 1);
-  assert.match(runtime, /LLGO="\$GITHUB_WORKSPACE\/_out\/bin\/llgo" bash scripts\/check-reported-runtime\.sh \|\| status=\$\?/);
   assert.match(runtime, /if: always\(\)\n        uses: actions\/upload-artifact@v6/);
   assert.match(runtime, /if-no-files-found: error/);
   assert.doesNotMatch(runtime, /continue-on-error|max-parallel|GOSUMDB: (?:off|'off')/);
+});
+
+test('the three native failures gate an exact partition of all reported programs', () => {
+  const calls = [...runtime.matchAll(/LLGO="\$GITHUB_WORKSPACE\/_out\/bin\/llgo" bash scripts\/check-reported-runtime\.sh ([a-z0-9 -]+) \|\| status=\$\?/g)]
+    .map(match => match[1].split(' '));
+  assert.deepEqual(calls[0], ['sqlite', 'libcabi0', 'purego-latest']);
+  assert.equal(calls.length, 2);
+  const runner = fs.readFileSync(path.join(root, 'scripts/check-reported-runtime.sh'), 'utf8');
+  const defaults = runner.match(/^  names=\(([^)]+)\)$/m)[1].split(' ');
+  assert.deepEqual([...calls.flat()].sort(), defaults.sort());
+  assert.match(runtime, /if \[\[ \$status == 0 \]\]; then\n            LLGO=/);
+  assert.match(runtime, /else\n            printf '%s\\n' funcval purego gohex s2 turso crc32 > _out\/reported-runtime\/not-run-cases\.txt\n          fi/);
+  assert.match(runtime, /exit "\$status"/);
 });

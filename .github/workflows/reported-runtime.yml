@@ -85,7 +85,7 @@ jobs:
           repository: cpunion/llgo
           ref: c5bd35a66378ade63b2ab5c6e5458ae2041874bd
           path: _out/llgo
-      - name: Policies, one CLI build and all nine programs
+      - name: Policies, one CLI build, failed programs first, then remaining programs
         timeout-minutes: 30
         run: |
           set -euo pipefail
@@ -111,7 +111,12 @@ jobs:
           go build -C "$LLGO_ROOT" -p=1 -tags=byollvm -buildvcs=true -mod=readonly -o "$GITHUB_WORKSPACE/_out/bin/llgo" ./cmd/llgo 2>&1 | tee _out/reported-runtime/llgo-build.log
           go list -C "$LLGO_ROOT" -m -json github.com/xgo-dev/plan9asm > _out/reported-runtime/core-module.json
           status=0
-          LLGO="$GITHUB_WORKSPACE/_out/bin/llgo" bash scripts/check-reported-runtime.sh || status=$?
+          LLGO="$GITHUB_WORKSPACE/_out/bin/llgo" bash scripts/check-reported-runtime.sh sqlite libcabi0 purego-latest || status=$?
+          if [[ $status == 0 ]]; then
+            LLGO="$GITHUB_WORKSPACE/_out/bin/llgo" bash scripts/check-reported-runtime.sh funcval purego gohex s2 turso crc32 || status=$?
+          else
+            printf '%s\n' funcval purego gohex s2 turso crc32 > _out/reported-runtime/not-run-cases.txt
+          fi
           test -z "$(git status --porcelain)" || status=1
           test -z "$(git -C "$LLGO_ROOT" status --porcelain)" || status=1
           exit "$status"
