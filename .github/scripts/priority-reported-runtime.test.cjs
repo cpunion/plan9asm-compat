@@ -50,7 +50,7 @@ test('the bounded runtime job keeps complete policies, one pinned CLI and all pr
   assert.match(runtime, /\n  workflow_dispatch:\n  schedule:\n    - cron: '0 2 \* \* 1'\n/);
   assert.match(runtime, /if: \$\{\{ github\.event_name != 'push' \|\| github\.ref == 'refs\/heads\/main' \|\| github\.event\.repository\.fork \}\}/);
   assert.match(runtime, /go-version: '1\.27\.3'/);
-  assert.match(runtime, /ref: c5bd35a66378ade63b2ab5c6e5458ae2041874bd\n/);
+  assert.match(runtime, /ref: 78427264b787ca8b540c0b2cded859df19c48535\n/);
   assert.match(runtime, /GOTOOLCHAIN: local\n/);
   assert.match(runtime, /GOSUMDB: sum\.golang\.org\n/);
   assert.ok(runtime.includes('install -y cmake pkg-config libgc-dev libssl-dev zlib1g-dev libffi-dev libcjson-dev libuv1-dev'));
