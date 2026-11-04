@@ -44,6 +44,8 @@ test('only the complete finite curated set bypasses corpus PR jobs', () => {
 });
 
 test('the bounded runtime job keeps complete policies, one pinned CLI and all programs', () => {
+  const jobEnvironment = runtime.slice(runtime.indexOf('\n    env:\n'), runtime.indexOf('\n    steps:\n'));
+  assert.doesNotMatch(jobEnvironment, /\$\{\{\s*runner\./); // GitHub rejects runner context in job-level env.
   assert.match(runtime, /runs-on: ubuntu-24\.04\n    timeout-minutes: 45\n/);
   assert.match(runtime, /\n  workflow_dispatch:\n  schedule:\n    - cron: '0 2 \* \* 1'\n/);
   assert.match(runtime, /if: \$\{\{ github\.event_name != 'push' \|\| github\.ref == 'refs\/heads\/main' \|\| github\.event\.repository\.fork \}\}/);
