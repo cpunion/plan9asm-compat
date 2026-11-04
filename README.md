@@ -46,6 +46,21 @@ See [verification rules](docs/development/discovery-verification.md) and
 corpus passes prove translation and LLVM object compilation, not whole-program
 linking or execution. Those remain separate LLGo compatibility tests.
 
+## Curated program regressions
+
+[Reported runtime probes](testdata/reported/README.md) retain nine independent
+programs with pinned dependencies, original assembly definitions, final linked
+symbols and checked execution. On a disposable Linux/amd64 executor, use Go
+1.27.3, LLVM 22 and an explicitly selected LLGo compiler:
+
+```sh
+LLGO=/path/to/llgo bash scripts/check-reported-runtime.sh
+```
+
+These results are separate from the existing corpus and discovery ledgers.
+Moving source files does not certify the programs at a new harness/compiler
+revision.
+
 The imported assembly ledger is **historical and incomplete**. It is retained
 byte-for-byte, not relabeled as current-head success. Fresh schema-12 reports
 bind the harness and translator independently. Missing, old or partial reports

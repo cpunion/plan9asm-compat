@@ -1,0 +1,89 @@
+{
+  "crc32": {
+    "module": "github.com/klauspost/crc32",
+    "version": "v1.3.0",
+    "package": "github.com/klauspost/crc32",
+    "go_abi0_suffix": true,
+    "file_definitions": {
+      "crc32_amd64.s": [
+        "github.com/klauspost/crc32.castagnoliSSE42",
+        "github.com/klauspost/crc32.castagnoliSSE42Triple",
+        "github.com/klauspost/crc32.ieeeCLMUL"
+      ]
+    }
+  },
+  "libcabi0": {
+    "module": "modernc.org/libc",
+    "version": "v1.75.7",
+    "package": "modernc.org/libc",
+    "go_abi0_suffix": true,
+    "file_definitions": {
+      "abi0_linux_amd64.s": [
+        "modernc.org/libc.Y__builtin_mul_overflowUint128",
+        "modernc.org/libc.Y__builtin_copysign",
+        "modernc.org/libc.Y__builtin_copysignf"
+      ]
+    }
+  },
+  "turso": {
+    "module": "github.com/ebitengine/purego",
+    "version": "v0.9.1",
+    "package": "github.com/ebitengine/purego",
+    "go_abi0_suffix": false,
+    "native_code_entries": ["syscall15X", "callbackasm1"],
+    "file_definitions": {
+      "sys_amd64.s": ["syscall15X", "callbackasm1"],
+      "zcallback_amd64.s": ["callbackasm"]
+    }
+  },
+  "purego-latest": {
+    "module": "github.com/ebitengine/purego",
+    "version": "v0.11.3",
+    "package": "github.com/ebitengine/purego",
+    "go_abi0_suffix": false,
+    "native_code_entries": ["syscallX", "callbackasm1"],
+    "file_definitions": {
+      "sys_amd64.s": [
+        "syscallX",
+        "callbackasm1"
+      ],
+      "zcallback_amd64.s": [
+        "callbackasm"
+      ]
+    }
+  },
+  "gohex": {
+    "module": "github.com/tmthrgd/go-hex",
+    "version": "v0.0.0-20190904060850-447a3041c3bc",
+    "package": "github.com/tmthrgd/go-hex",
+    "file_definitions": {
+      "hex_encode_amd64.s": [
+        "github.com/tmthrgd/go-hex.encodeAVX",
+        "github.com/tmthrgd/go-hex.encodeSSE"
+      ],
+      "hex_decode_amd64.s": [
+        "github.com/tmthrgd/go-hex.decodeAVX",
+        "github.com/tmthrgd/go-hex.decodeSSE"
+      ]
+    },
+    "go_abi0_suffix": true
+  },
+  "s2": {
+    "module": "github.com/klauspost/compress",
+    "version": "v1.20.1",
+    "package": "github.com/klauspost/compress/s2",
+    "file_definitions": {
+      "encodeblock_amd64.s": [
+        "github.com/klauspost/compress/s2.encodeBlockAsm8B",
+        "github.com/klauspost/compress/s2.encodeBlockAsm10B",
+        "github.com/klauspost/compress/s2.encodeBlockAsm12B",
+        "github.com/klauspost/compress/s2.encodeBlockAsm4MB",
+        "github.com/klauspost/compress/s2.encodeBlockAsm"
+      ],
+      "decode_amd64.s": [
+        "github.com/klauspost/compress/s2.s2Decode"
+      ]
+    },
+    "go_abi0_suffix": true
+  }
+}

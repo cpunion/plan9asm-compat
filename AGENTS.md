@@ -12,6 +12,8 @@ Go assembler coverage and independent lowering regressions belong upstream in
   `llgo-compat/plan9asm` by PR. Do not merge or directly push upstream.
 - Use Go 1.27.1 and LLVM 22. Missing required tools fail, never skip. External
   library compilation does not use the historical Go compatibility matrix.
+  The separate [curated runtime probes](testdata/reported/README.md) require
+  their audited Go 1.27.3 SDK and LLVM 22.
 - Run index scans on the designated remote scanner, and compile external code
   on separate disposable executors. Local first-party harness fixtures are OK.
 - Never restart historical inventory during migration. Preserve contiguous
