@@ -74,7 +74,7 @@ func main() {
 			15, 6.25, 18, 7.5, 21, 8.75, 24)
 		var want float64
 		for i := 1; i <= 8; i++ {
-			want += float64(3*i*i)
+			want += float64(3 * i * i)
 		}
 		for i := 1; i <= 7; i++ {
 			want += float64(i) * 1.25 * float64(i+16)

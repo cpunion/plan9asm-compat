@@ -1,0 +1,122 @@
+name: Reported program runtime
+
+on:
+  push:
+    paths:
+      - 'testdata/reported/**'
+      - 'scripts/check-reported-runtime.sh'
+      - 'scripts/check-reported-assembly.py'
+      - 'scripts/test_reported_assembly.py'
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.github/workflows/reported-runtime.yml'
+      - '.github/workflows/go-ci.yml'
+      - '.github/scripts/priority-reported-runtime.test.cjs'
+  pull_request:
+    paths:
+      - 'testdata/reported/**'
+      - 'scripts/check-reported-runtime.sh'
+      - 'scripts/check-reported-assembly.py'
+      - 'scripts/test_reported_assembly.py'
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.github/workflows/reported-runtime.yml'
+      - '.github/workflows/go-ci.yml'
+      - '.github/scripts/priority-reported-runtime.test.cjs'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  reported-runtime:
+    if: ${{ github.event_name != 'push' || github.ref == 'refs/heads/main' || github.event.repository.fork }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      GOENV: 'off'
+      GOWORK: 'off'
+      GOTOOLCHAIN: local
+      GOFLAGS: -mod=readonly
+      GOAMD64: v1
+      GOMAXPROCS: '2'
+      GOMEMLIMIT: 4GiB
+      CGO_ENABLED: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+      GOPROXY: https://proxy.golang.org,https://goproxy.cn,direct
+      GOSUMDB: sum.golang.org
+      GOPRIVATE: ''
+      GONOSUMDB: ''
+      GONOPROXY: ''
+      GOINSECURE: ''
+      LLVM_CONFIG: /usr/bin/llvm-config-22
+      CC: clang-22
+      CXX: clang++-22
+      LD_LIBRARY_PATH: /usr/lib/llvm-22/lib
+      LLGO_ROOT: ${{ github.workspace }}/_out/llgo
+      LLGO_BUILD_CACHE: 'on'
+      XDG_CACHE_HOME: ${{ runner.temp }}/reported-llgo
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Prepare evidence directory
+        run: |
+          mkdir -p _out/reported-runtime
+          git rev-parse HEAD > _out/reported-runtime/harness-source.txt
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22.23.4'
+      - uses: ./.github/actions/setup-go
+        with:
+          go-version: '1.27.3'
+          cache: false
+      - name: Install LLVM 22
+        timeout-minutes: 14
+        run: |
+          set -euo pipefail
+          bash scripts/install-ci-llvm22-ubuntu.sh 2>&1 | tee _out/reported-runtime/llvm-install.log
+          sudo timeout -k 10s 4m env DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=2 install -y cmake pkg-config libgc-dev libssl-dev zlib1g-dev libffi-dev libcjson-dev libuv1-dev 2>&1 | tee _out/reported-runtime/native-deps.log
+      - name: Checkout pinned LLGo
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          repository: cpunion/llgo
+          ref: c5bd35a66378ade63b2ab5c6e5458ae2041874bd
+          path: _out/llgo
+      - name: Policies, one CLI build and all nine programs
+        timeout-minutes: 30
+        run: |
+          set -euo pipefail
+          export CGO_CPPFLAGS="$($LLVM_CONFIG --cppflags)" CGO_CXXFLAGS=-std=c++17
+          export CGO_LDFLAGS="$($LLVM_CONFIG --ldflags) $($LLVM_CONFIG --libs all)"
+          test "$(go env GOVERSION)" = go1.27.3
+          test "$($LLVM_CONFIG --version)" = 22.1.8
+          git -C "$LLGO_ROOT" rev-parse HEAD > _out/reported-runtime/llgo-source.txt
+          test "$(cat _out/reported-runtime/llgo-source.txt)" = c5bd35a66378ade63b2ab5c6e5458ae2041874bd
+          go env -json GOVERSION GOPATH GOMODCACHE GOSUMDB GOPROXY > _out/reported-runtime/go-env.json
+          node --test .github/scripts/priority-*.test.cjs 2>&1 | tee _out/reported-runtime/node-policy.log
+          go test . -run '^TestCI' -count=1 2>&1 | tee _out/reported-runtime/go-policy.log
+          python3 scripts/test_reported_assembly.py -v 2>&1 | tee _out/reported-runtime/python-guards.log
+          bash -n scripts/check-reported-runtime.sh
+          go test -C testdata/reported/crc32 -count=1 2>&1 | tee _out/reported-runtime/crc-oracle-tests.log
+          git ls-files -z '*.go' | xargs -0 gofmt -l > _out/reported-runtime/gofmt.log
+          test ! -s _out/reported-runtime/gofmt.log
+          mkdir -p _out/bin
+          trap 'rm -f -- "$GITHUB_WORKSPACE/_out/bin/llgo"' EXIT
+          go build -C "$LLGO_ROOT" -p=1 -tags=byollvm -buildvcs=true -mod=readonly -o "$GITHUB_WORKSPACE/_out/bin/llgo" ./cmd/llgo 2>&1 | tee _out/reported-runtime/llgo-build.log
+          go list -C "$LLGO_ROOT" -m -json github.com/xgo-dev/plan9asm > _out/reported-runtime/core-module.json
+          status=0
+          LLGO="$GITHUB_WORKSPACE/_out/bin/llgo" bash scripts/check-reported-runtime.sh || status=$?
+          test -z "$(git status --porcelain)" || status=1
+          test -z "$(git -C "$LLGO_ROOT" status --porcelain)" || status=1
+          exit "$status"
+      - name: Upload complete or failed evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: reported-runtime
+          path: _out/reported-runtime
+          if-no-files-found: error
