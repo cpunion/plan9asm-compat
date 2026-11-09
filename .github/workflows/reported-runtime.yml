@@ -83,7 +83,7 @@ jobs:
         with:
           persist-credentials: false
           repository: cpunion/llgo
-          ref: 88ce3e47b4074b554f75efb3a6dc3f62eb2820d5
+          ref: 4e45ac64bf6f92ea42f8fce618d1eda61a6cbf83
           path: _out/llgo
       - name: Policies, one CLI build, failed programs first, then remaining programs
         timeout-minutes: 30
@@ -97,7 +97,7 @@ jobs:
           test "$(go env GOVERSION)" = go1.27.3
           test "$($LLVM_CONFIG --version)" = 22.1.8
           git -C "$LLGO_ROOT" rev-parse HEAD > _out/reported-runtime/llgo-source.txt
-          test "$(cat _out/reported-runtime/llgo-source.txt)" = 88ce3e47b4074b554f75efb3a6dc3f62eb2820d5
+          test "$(cat _out/reported-runtime/llgo-source.txt)" = 4e45ac64bf6f92ea42f8fce618d1eda61a6cbf83
           go env -json GOVERSION GOPATH GOMODCACHE GOSUMDB GOPROXY > _out/reported-runtime/go-env.json
           node --test .github/scripts/priority-*.test.cjs 2>&1 | tee _out/reported-runtime/node-policy.log
           go test . -run '^TestCI' -count=1 2>&1 | tee _out/reported-runtime/go-policy.log
